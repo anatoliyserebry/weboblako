@@ -296,7 +296,7 @@ def create_app(directory=None):
                 ),
                 "X-Content-Type-Options": "nosniff",
                 "X-Frame-Options": "DENY",
-                "Referrer-Policy": "no-referrer",
+                "Referrer-Policy": "same-origin",
                 "Cache-Control": "no-store",
             }
         )
