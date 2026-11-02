@@ -3,543 +3,245 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f7f6ee">
-  <title>{{ 'Пользователи' if mode == 'users' else 'Мои файлы' if mode == 'files' else 'Добро пожаловать' }} · Моё облако</title>
+  <meta name="theme-color" content="#46755b">
+  <title>Моё облако</title>
   <link rel="icon" href="{{ url_for('static', filename='cloud.svg') }}" type="image/svg+xml">
   <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='sky.css') }}">
-  <script src="{{ url_for('static', filename='app.js') }}" defer>
-</script>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
 </head>
-<body class="{{ 'workspace' if user else 'auth-page' }}">
-{% from '_sky.html' import sky, cloudmark %}
-<svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <symbol id="i-cloud" viewBox="0 0 24 24">
-<path d="M6.5 18a4.5 4.5 0 0 1-.6-9A6.5 6.5 0 0 1 18.5 8a5 5 0 0 1 0 10Z"/>
-</symbol>
-  <symbol id="i-grid" viewBox="0 0 24 24">
-<rect x="3" y="3" width="7" height="7" rx="1.5"/>
-<rect x="14" y="3" width="7" height="7" rx="1.5"/>
-<rect x="3" y="14" width="7" height="7" rx="1.5"/>
-<rect x="14" y="14" width="7" height="7" rx="1.5"/>
-</symbol>
-  <symbol id="i-list" viewBox="0 0 24 24">
-<path d="M9 5h12M9 12h12M9 19h12M3 5h.01M3 12h.01M3 19h.01"/>
-</symbol>
-  <symbol id="i-folder" viewBox="0 0 24 24">
-<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>
-<path d="M3 10h18"/>
-</symbol>
-  <symbol id="i-file" viewBox="0 0 24 24">
-<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z"/>
-<path d="M14 3v6h6M8 13h8M8 17h5"/>
-</symbol>
-  <symbol id="i-image" viewBox="0 0 24 24">
-<rect x="3" y="3" width="18" height="18" rx="3"/>
-<circle cx="8.5" cy="8.5" r="1.5"/>
-<path d="m21 15-5-5L5 21"/>
-</symbol>
-  <symbol id="i-archive" viewBox="0 0 24 24">
-<rect x="3" y="3" width="18" height="5" rx="1.5"/>
-<path d="M5 8v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8M10 12h4"/>
-</symbol>
-  <symbol id="i-search" viewBox="0 0 24 24">
-<circle cx="10.5" cy="10.5" r="6.5"/>
-<path d="m16 16 4.5 4.5"/>
-</symbol>
-  <symbol id="i-upload" viewBox="0 0 24 24">
-<path d="M12 16V3m-5 5 5-5 5 5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/>
-</symbol>
-  <symbol id="i-download" viewBox="0 0 24 24">
-<path d="M12 3v13m-5-5 5 5 5-5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/>
-</symbol>
-  <symbol id="i-plus" viewBox="0 0 24 24">
-<path d="M12 5v14M5 12h14"/>
-</symbol>
-  <symbol id="i-arrow" viewBox="0 0 24 24">
-<path d="M5 12h14m-5-5 5 5-5 5"/>
-</symbol>
-  <symbol id="i-chevron" viewBox="0 0 24 24">
-<path d="m9 5 7 7-7 7"/>
-</symbol>
-  <symbol id="i-back" viewBox="0 0 24 24">
-<path d="M19 12H5m6-6-6 6 6 6"/>
-</symbol>
-  <symbol id="i-check" viewBox="0 0 24 24">
-<path d="m5 12 4 4L19 6"/>
-</symbol>
-  <symbol id="i-shield" viewBox="0 0 24 24">
-<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"/>
-<path d="m8 12 3 3 5-6"/>
-</symbol>
-  <symbol id="i-lock" viewBox="0 0 24 24">
-<rect x="5" y="10" width="14" height="11" rx="2"/>
-<path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/>
-</symbol>
-  <symbol id="i-users" viewBox="0 0 24 24">
-<circle cx="9" cy="7" r="4"/>
-<path d="M2 21v-3a7 7 0 0 1 14 0v3M16 3a4 4 0 0 1 0 8m3 4a6 6 0 0 1 3 6"/>
-</symbol>
-  <symbol id="i-settings" viewBox="0 0 24 24">
-<path d="m10 3-.7 2.4-2 .9-2.3-.6-2 3.5L4.7 11v2L3 14.8l2 3.5 2.3-.6 2 .9L10 21h4l.7-2.4 2-.9 2.3.6 2-3.5-1.7-1.8v-2L21 9.2l-2-3.5-2.3.6-2-.9L14 3Z"/>
-<circle cx="12" cy="12" r="3"/>
-</symbol>
-  <symbol id="i-logout" viewBox="0 0 24 24">
-<path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4m6-14 5 5-5 5M8 12h12"/>
-</symbol>
-  <symbol id="i-trash" viewBox="0 0 24 24">
-<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>
-</symbol>
-  <symbol id="i-close" viewBox="0 0 24 24">
-<path d="m6 6 12 12M6 18 18 6"/>
-</symbol>
-  <symbol id="i-eye" viewBox="0 0 24 24">
-<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
-<circle cx="12" cy="12" r="3"/>
-</symbol>
-  <symbol id="i-sort" viewBox="0 0 24 24">
-<path d="M8 4v16m-4-4 4 4 4-4M15 5h6m-6 5h4m-4 5h2"/>
-</symbol>
-  <symbol id="i-menu" viewBox="0 0 24 24">
-<path d="M4 6h16M4 12h16M4 18h16"/>
-</symbol>
-</svg>
-{% macro icon(name, class='') -%}<svg class="icon {{ class }}" aria-hidden="true">
-<use href="#i-{{ name }}">
-</use>
-</svg>{%- endmacro %}
-{% macro token() -%}<input type="hidden" name="csrf" value="{{ csrf }}">{%- endmacro %}
-{% macro brand() -%}
-<a class="brand" href="{{ url_for('index') }}">
-  <span class="brand-mark">{{ cloudmark() }}</span>
-  <span class="brand-wordmark">моё облако<span class="brand-dot">.</span><small>ваше маленькое небо</small></span>
-</a>
+<body>
+{% macro token() -%}
+  <input type="hidden" name="csrf" value="{{ csrf }}">
 {%- endmacro %}
-{% macro notices() -%}
-  {% for text in get_flashed_messages() %}<div class="notice" role="status">{{ icon('check') }}<span>{{ text }}</span>
-<button type="button" class="icon-button" data-dismiss aria-label="Закрыть уведомление">{{ icon('close') }}</button>
-</div>{% endfor %}
+{% macro size(bytes) -%}
+  {% if bytes >= 1048576 %}{{ (bytes / 1048576)|round(1) }} МБ
+  {% elif bytes >= 1024 %}{{ (bytes / 1024)|round(1) }} КБ
+  {% else %}{{ bytes }} Б{% endif %}
 {%- endmacro %}
-{% macro size(bytes) -%}{% if bytes >= 1048576 %}{{ (bytes / 1048576)|round(1) }} МБ{% elif bytes >= 1024 %}{{ (bytes / 1024)|round(1) }} КБ{% else %}{{ bytes }} Б{% endif %}{%- endmacro %}
 
-{% if user %}
-  <a class="skip-link" href="#main">Перейти к содержимому</a>
-  <button type="button" class="sidebar-scrim" data-menu-close aria-label="Закрыть меню" hidden>
-</button>
-  <aside class="sidebar" id="sidebar" aria-label="Основная навигация">
-    {{ brand() }}
-    <div class="sidebar-space-label">ЛИЧНОЕ ПРОСТРАНСТВО</div>
-    <nav class="side-nav">
-      <a class="nav-link {{ 'active' if mode == 'files' }}" href="{{ url_for('index') }}" {% if mode == 'files' %}aria-current="page"{% endif %}>{{ icon('folder') }}<span>Мои файлы</span>{% if mode == 'files' %}<span class="nav-count">{{ files|length }}</span>{% endif %}</a>
-      {% if user.role == 'admin' %}<a class="nav-link {{ 'active' if mode == 'users' }}" href="{{ url_for('index', tab='users') }}" {% if mode == 'users' %}aria-current="page"{% endif %}>{{ icon('users') }}<span>Пользователи</span>
-</a>{% endif %}
-      <button class="nav-link" type="button" data-dialog="account-dialog">{{ icon('settings') }}<span>Настройки аккаунта</span>
-</button>
-    </nav>
-    <div class="sidebar-bottom">
-      {% if used is defined %}
-      {% set percent = [100, (used / quota * 100)]|min %}
-      <section class="storage-card" aria-label="Использование хранилища">
-        <div class="storage-heading">{{ icon('cloud') }}<strong>Ваше хранилище</strong>
-</div>
-        <div class="storage-meter" role="progressbar" aria-label="Использовано места" aria-valuenow="{{ percent|round(1) }}" aria-valuemin="0" aria-valuemax="100">
-<span style="width: {{ percent }}%">
-</span>
-</div>
-        <p>
-<strong>{{ used }} МБ</strong> из {{ quota }} МБ</p>
-        <span class="storage-caption">Место для самого важного</span>
-      </section>
-      {% endif %}
-      <div class="secure-note">{{ icon('shield') }}<span>Защищённая передача FTPS</span>
-</div>
-      <div class="sidebar-profile">
-<span class="avatar">{{ user.username[0]|upper }}</span>
-<div>
-<strong>{{ user.username }}</strong>
-<span>{{ 'Администратор' if user.role == 'admin' else 'Личный аккаунт' }}</span>
-</div>
-<form method="post" action="{{ url_for('account_action', action='logout') }}">{{ token() }}<button class="icon-button" aria-label="Выйти из аккаунта" title="Выйти">{{ icon('logout') }}</button>
-</form>
-</div>
+<header class="header">
+  <div class="container header-content">
+    <div>
+      <a class="brand" href="{{ url_for('index') }}"><img class="brand-icon" src="{{ url_for('static', filename='cloud.svg') }}" alt="" width="32" height="32">Моё облако</a>
+      <p class="subtitle">Хранилище файлов</p>
     </div>
-  </aside>
-  <div class="workspace-content">
-    <header class="topbar">
-      <div class="topbar-location">
-<button type="button" class="icon-button mobile-menu" data-menu aria-controls="sidebar" aria-expanded="false" aria-label="Открыть меню">{{ icon('menu') }}</button>
-<span>Личное пространство</span>{{ icon('chevron') }}<strong>{{ 'Пользователи' if mode == 'users' else 'Мои файлы' }}</strong>
-</div>
-      <span class="connection-status">
-<span>
-</span>Всё под защитой</span>
-    </header>
-    <main class="main-content" id="main">
-      {{ notices() }}
-      {% if mode == 'files' %}
-      {% set counts = namespace(folders=0, documents=0, images=0, other=0) %}
-      {% for entry in files %}
-        {% set ext = entry.name.rsplit('.', 1)[-1]|lower %}
-        {% if entry.type == 'dir' %}{% set counts.folders = counts.folders + 1 %}
-        {% elif ext in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif', 'bmp', 'heic'] %}{% set counts.images = counts.images + 1 %}
-        {% elif ext in ['pdf', 'doc', 'docx', 'txt', 'md', 'odt', 'rtf', 'xls', 'xlsx', 'csv', 'ppt', 'pptx'] %}{% set counts.documents = counts.documents + 1 %}
-        {% else %}{% set counts.other = counts.other + 1 %}{% endif %}
-      {% endfor %}
-      <section class="page-heading sky-heading">
-        <div class="heading-copy">
-          <p class="eyebrow"><span aria-hidden="true">✧</span> ЛИЧНОЕ НЕБО · {{ user.username }}</p>
-          <h1>Для важного.<br><em>И всего вашего.</em></h1>
-          <p class="page-description">Файлы, идеи и большие планы. Здесь им будет хорошо.</p>
-          <button type="button" class="button button-primary" data-dialog="upload-dialog">{{ icon('plus') }}Загрузить файл</button>
-        </div>
-        <figure class="workspace-sky">{{ sky() }}<figcaption>у каждого файла — своё облако</figcaption></figure>
-      </section>
-      <div class="overview-heading">
-<h2>Всё по своим местам</h2>
-<span>маленький порядок, большое спокойствие</span>
-</div>
-      <section class="overview-grid" aria-label="Категории файлов">
-        <button class="overview-card" type="button" data-category="folder" aria-pressed="false">
-<span class="category-icon amber">{{ icon('folder') }}</span>
-<span class="overview-copy">
-<strong>Папки</strong>
-<span>{{ counts.folders }} в этой папке</span>
-</span>{{ icon('arrow', 'card-arrow') }}</button>
-        <button class="overview-card" type="button" data-category="document" aria-pressed="false">
-<span class="category-icon blue">{{ icon('file') }}</span>
-<span class="overview-copy">
-<strong>Документы</strong>
-<span>Файлов: {{ counts.documents }}</span>
-</span>{{ icon('arrow', 'card-arrow') }}</button>
-        <button class="overview-card" type="button" data-category="image" aria-pressed="false">
-<span class="category-icon purple">{{ icon('image') }}</span>
-<span class="overview-copy">
-<strong>Изображения</strong>
-<span>Файлов: {{ counts.images }}</span>
-</span>{{ icon('arrow', 'card-arrow') }}</button>
-        <button class="overview-card" type="button" data-category="other" aria-pressed="false">
-<span class="category-icon green">{{ icon('archive') }}</span>
-<span class="overview-copy">
-<strong>Другие файлы</strong>
-<span>Файлов: {{ counts.other }}</span>
-</span>{{ icon('arrow', 'card-arrow') }}</button>
-      </section>
-      <section class="files-panel" aria-labelledby="files-title">
-        <div class="files-panel-heading">
-<div class="section-title">
-<h2 id="files-title">Мои файлы</h2>
-<span class="count-badge" data-total-count>{{ files|length }}</span>
-</div>
-<button type="button" class="button button-secondary button-small" data-dialog="folder-dialog">{{ icon('plus') }}Новая папка</button>
-</div>
-        <div class="file-toolbar">
-          <nav class="breadcrumbs" aria-label="Путь к папке">
-<a href="{{ url_for('index') }}">{{ icon('cloud') }}<span>Моё облако</span>
-</a>{% set crumbs = namespace(path='') %}{% for part in path.strip('/').split('/') if part %}{% set crumbs.path = crumbs.path + '/' + part %}{{ icon('chevron') }}<a href="{{ url_for('index', path=crumbs.path) }}" {% if loop.last %}aria-current="location"{% endif %}>{{ part }}</a>{% endfor %}</nav>
-          <div class="file-tools">
-<label class="search-field">{{ icon('search') }}<input type="search" id="file-search" placeholder="Найти в этой папке" aria-label="Найти в этой папке">
-<kbd>/</kbd>
-</label>
-<div class="view-switch" aria-label="Вид файлов">
-<button type="button" class="icon-button is-active" data-view="list" aria-pressed="true" aria-label="Список">{{ icon('list') }}</button>
-<button type="button" class="icon-button" data-view="grid" aria-pressed="false" aria-label="Плитки">{{ icon('grid') }}</button>
-</div>
-</div>
-        </div>
-        <div class="filter-status" hidden>
-<span data-filter-label>
-</span>
-<button type="button" data-clear-filter>Показать всё {{ icon('close') }}</button>
-</div>
-        <div class="file-list" data-file-list>
-          <div class="list-heading">
-<button type="button" data-sort aria-label="Изменить сортировку по имени">Название {{ icon('sort') }}</button>
-<span>Тип</span>
-<span>Размер</span>
-<span class="actions-heading">Действия</span>
-</div>
-          {% if path != '/' %}<a class="parent-folder" href="{{ url_for('index', path=parent) }}">{{ icon('back') }}На уровень выше</a>{% endif %}
-          {% for entry in files %}
-            {% set ext = entry.name.rsplit('.', 1)[-1]|lower %}
-            {% set category = 'folder' if entry.type == 'dir' else 'image' if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif', 'bmp', 'heic'] else 'document' if ext in ['pdf', 'doc', 'docx', 'txt', 'md', 'odt', 'rtf', 'xls', 'xlsx', 'csv', 'ppt', 'pptx'] else 'other' %}
-            <article class="file-entry" data-name="{{ entry.name }}" data-kind="{{ category }}">
-              <a class="file-name" href="{{ url_for('index', path=join_path(path, entry.name)) if entry.type == 'dir' else url_for('download', path=join_path(path, entry.name)) }}" {% if entry.type == 'file' %}download{% endif %}>
-<span class="file-icon {{ 'amber' if category == 'folder' else 'purple' if category == 'image' else 'blue' if category == 'document' else 'green' }}">{{ icon('folder' if category == 'folder' else 'image' if category == 'image' else 'file' if category == 'document' else 'archive') }}</span>
-<span class="file-name-copy">
-<strong title="{{ entry.name }}">{{ entry.name }}</strong>
-<span>{{ 'Папка' if entry.type == 'dir' else ext|upper if '.' in entry.name else 'Файл' }}</span>
-</span>
-</a>
-              <span class="file-type">{{ 'Папка' if entry.type == 'dir' else 'Изображение' if category == 'image' else 'Документ' if category == 'document' else 'Файл' }}</span>
-              <span class="file-size">{{ '—' if entry.type == 'dir' else size(entry.size) }}</span>
-              <div class="entry-actions">{% if entry.type == 'file' %}<a class="icon-button" href="{{ url_for('download', path=join_path(path, entry.name)) }}" download aria-label="Скачать {{ entry.name }}" title="Скачать">{{ icon('download') }}</a>{% else %}<a class="icon-button" href="{{ url_for('index', path=join_path(path, entry.name)) }}" aria-label="Открыть {{ entry.name }}" title="Открыть">{{ icon('arrow') }}</a>{% endif %}<button type="button" class="icon-button delete-button" data-delete-path="{{ join_path(path, entry.name) }}" data-delete-name="{{ entry.name }}" aria-label="Удалить {{ entry.name }}" title="Удалить">{{ icon('trash') }}</button>
-</div>
-            </article>
-          {% endfor %}
-        </div>
-        <div class="empty-state" data-empty {% if files %}hidden{% endif %}>
-<span class="empty-sky">{{ sky() }}</span>
-<h3 data-empty-title>Здесь начинается ваше облако</h3>
-<p data-empty-description>Загрузите первый файл или создайте папку.<br>Всё важное будет под рукой.</p>
-<button type="button" class="button button-secondary button-small" data-dialog="upload-dialog" data-empty-upload>{{ icon('plus') }}Добавить файл</button>
-</div>
-        <div class="files-footer">
-<span data-result-count aria-live="polite">Объектов: {{ files|length }}</span>
-<span>{{ icon('lock') }}Доступны только вам</span>
-</div>
-      </section>
-      <form class="dropzone" id="quick-upload" method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data" data-upload-form data-max-file="{{ max_file * 1048576 }}">
-        {{ token() }}<input type="hidden" name="path" value="{{ path }}">
-        <span class="dropzone-icon">{{ icon('upload') }}</span>
-<div class="dropzone-copy">
-<strong>Ещё немного вашего — сюда.</strong>
-<p>Перетащите сюда файл или выберите его на устройстве</p>
-<span>Любой формат · до {{ max_file }} МБ</span>
-</div>
-<div class="dropzone-action">
-<label class="button button-secondary" for="quick-file">Выбрать файл {{ icon('arrow') }}</label>
-<input class="file-input" id="quick-file" type="file" name="file" aria-label="Выберите файл для загрузки" required>
-<button class="button button-primary button-small" type="submit" data-upload-submit hidden>Загрузить</button>
-</div>
-<p class="upload-feedback" role="status">
-</p>
-      </form>
-      <footer class="page-footer">
-<span>Бережно к файлам. Нежно к вам.</span>
-<span>{{ icon('cloud') }}Моё облако</span>
-</footer>
-
-      <dialog id="folder-dialog" aria-labelledby="folder-title">
-<div class="dialog-heading">
-<span class="category-icon amber">{{ icon('folder') }}</span>
-<button type="button" class="icon-button" data-close aria-label="Закрыть">{{ icon('close') }}</button>
-</div>
-<h2 id="folder-title">Новая папка</h2>
-<p class="dialog-description">Пусть у всего будет своё место.</p>
-<form method="post" action="{{ url_for('folder') }}">{{ token() }}<input type="hidden" name="path" value="{{ path }}">
-<label for="folder-name">Название папки</label>
-<input id="folder-name" name="name" placeholder="Например, Рабочие проекты" maxlength="100" required autofocus>
-<div class="dialog-actions">
-<button type="button" class="button button-secondary" data-close>Отмена</button>
-<button class="button button-primary">Создать папку</button>
-</div>
-</form>
-</dialog>
-      <dialog id="upload-dialog" aria-labelledby="upload-title">
-<div class="dialog-heading">
-<span class="category-icon green">{{ icon('upload') }}</span>
-<button type="button" class="icon-button" data-close aria-label="Закрыть">{{ icon('close') }}</button>
-</div>
-<h2 id="upload-title">Добавить в облако</h2>
-<p class="dialog-description">Файл появится в текущей папке.</p>
-<form method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data" data-upload-form data-max-file="{{ max_file * 1048576 }}">{{ token() }}<input type="hidden" name="path" value="{{ path }}">
-<label class="upload-picker" for="dialog-file">{{ icon('upload') }}<strong>Выберите файл</strong>
-<span>Любой формат · до {{ max_file }} МБ</span>
-</label>
-<input id="dialog-file" class="dialog-file-input" type="file" name="file" required>
-<p class="upload-feedback" role="status">
-</p>
-<div class="dialog-actions">
-<button type="button" class="button button-secondary" data-close>Отмена</button>
-<button class="button button-primary" data-upload-submit>{{ icon('upload') }}Загрузить</button>
-</div>
-</form>
-</dialog>
-      <dialog id="delete-dialog" aria-labelledby="delete-title">
-<div class="dialog-heading">
-<span class="category-icon red">{{ icon('trash') }}</span>
-<button type="button" class="icon-button" data-close aria-label="Закрыть">{{ icon('close') }}</button>
-</div>
-<h2 id="delete-title">Удалить безвозвратно?</h2>
-<p class="dialog-description">
-<strong data-delete-label>
-</strong>
-<br>Восстановить файл не получится. Папку можно удалить, только если она пустая.</p>
-<form method="post" action="{{ url_for('delete') }}">{{ token() }}<input type="hidden" name="path" data-delete-value>
-<div class="dialog-actions">
-<button type="button" class="button button-secondary" data-close autofocus>Отмена</button>
-<button class="button button-danger">Удалить</button>
-</div>
-</form>
-</dialog>
-
-      {% elif mode == 'users' %}
-      <section class="page-heading">
-<div>
-<p class="eyebrow">УПРАВЛЕНИЕ ДОСТУПОМ</p>
-<h1>Люди в вашем облаке<span>.</span>
-</h1>
-<p class="page-description">Аккаунты, роли и безопасность — в одном месте.</p>
-</div>
-<button type="button" class="button button-primary" data-dialog="user-dialog">{{ icon('plus') }}Новый пользователь</button>
-</section>
-      <section class="files-panel users-panel">
-<div class="files-panel-heading">
-<div class="section-title">
-<h2>Пользователи</h2>
-<span class="count-badge">{{ users|length }}</span>
-</div>
-<span class="muted">Всего аккаунтов: {{ users|length }}</span>
-</div>
-<div class="table-scroll">
-<table class="users-table">
-<thead>
-<tr>
-<th>Пользователь</th>
-<th>Роль</th>
-<th>Статус</th>
-<th>Управление</th>
-</tr>
-</thead>
-<tbody>{% for item in users %}<tr>
-<td>
-<div class="user-cell">
-<span class="avatar">{{ item.username[0]|upper }}</span>
-<strong>{{ item.username }}</strong>{% if item.id == user.id %}<span class="you-badge">Вы</span>{% endif %}</div>
-</td>
-<td>{{ 'Администратор' if item.role == 'admin' else 'Пользователь' }}</td>
-<td>
-<span class="status-badge {{ 'is-disabled' if not item.active }}">
-<span>
-</span>{{ 'Активен' if item.active else 'Отключён' }}</span>
-</td>
-<td>
-<button type="button" class="button button-secondary button-small" data-dialog="user-{{ item.id }}">{{ icon('settings') }}Изменить</button>
-</td>
-</tr>{% endfor %}</tbody>
-</table>
-</div>
-</section>
-      <div class="admin-note">{{ icon('shield') }}<p>У каждого пользователя своё личное хранилище. Доступ к файлам есть только у владельца аккаунта.</p>
-</div>
-      <dialog id="user-dialog" aria-labelledby="user-title">
-<div class="dialog-heading">
-<span class="category-icon green">{{ icon('users') }}</span>
-<button type="button" class="icon-button" data-close aria-label="Закрыть">{{ icon('close') }}</button>
-</div>
-<h2 id="user-title">Новый пользователь</h2>
-<p class="dialog-description">Создайте личное пространство для нового пользователя.</p>
-<form method="post" action="{{ url_for('admin_create') }}">{{ token() }}<label for="new-username">Логин</label>
-<input id="new-username" name="username" pattern="[A-Za-z0-9_]{3,24}" maxlength="24" placeholder="Латинские буквы, цифры или _" required autofocus>
-<label for="new-user-password">Пароль</label>
-<input id="new-user-password" name="password" type="password" autocomplete="new-password" placeholder="Не менее 12 символов" minlength="12" maxlength="128" required>
-<div class="dialog-actions">
-<button type="button" class="button button-secondary" data-close>Отмена</button>
-<button class="button button-primary">Создать аккаунт</button>
-</div>
-</form>
-</dialog>
-      {% for item in users %}<dialog id="user-{{ item.id }}" aria-labelledby="user-title-{{ item.id }}">
-<div class="dialog-heading">
-<span class="avatar">{{ item.username[0]|upper }}</span>
-<button type="button" class="icon-button" data-close aria-label="Закрыть">{{ icon('close') }}</button>
-</div>
-<h2 id="user-title-{{ item.id }}">{{ item.username }}</h2>
-<p class="dialog-description">Настройки доступа и безопасности.</p>
-<details class="setting-detail">
-<summary>Изменить роль {{ icon('chevron') }}</summary>
-<form method="post" action="{{ url_for('admin_update', user_id=item.id) }}">{{ token() }}<input type="hidden" name="action" value="role">
-<input type="hidden" name="value" value="{{ 'user' if item.role == 'admin' else 'admin' }}">
-<p class="muted">Текущая роль: {{ 'администратор' if item.role == 'admin' else 'пользователь' }}.</p>
-<button class="button button-secondary button-small">Сделать {{ 'пользователем' if item.role == 'admin' else 'администратором' }}</button>
-</form>
-</details>
-<details class="setting-detail">
-<summary>{{ 'Отключить' if item.active else 'Включить' }} аккаунт {{ icon('chevron') }}</summary>
-<form method="post" action="{{ url_for('admin_update', user_id=item.id) }}">{{ token() }}<input type="hidden" name="action" value="active">
-<input type="hidden" name="value" value="{{ '0' if item.active else '1' }}">
-<p class="muted">{{ 'Пользователь потеряет доступ к своему аккаунту.' if item.active else 'Пользователь снова сможет войти в аккаунт.' }}</p>
-<button class="button {{ 'button-danger' if item.active else 'button-primary' }} button-small">Подтвердить</button>
-</form>
-</details>
-<details class="setting-detail">
-<summary>Сбросить пароль {{ icon('chevron') }}</summary>
-<form method="post" action="{{ url_for('admin_update', user_id=item.id) }}">{{ token() }}<input type="hidden" name="action" value="password">
-<label for="reset-{{ item.id }}">Новый пароль</label>
-<input id="reset-{{ item.id }}" name="value" type="password" autocomplete="new-password" minlength="12" maxlength="128" placeholder="Не менее 12 символов" required>
-<button class="button button-primary button-small">Сохранить пароль</button>
-</form>
-</details>
-</dialog>{% endfor %}
-      {% elif mode == 'error' %}
-      <section class="error-card">
-<span class="category-icon red">{{ icon('shield') }}</span>
-<p class="eyebrow">НЕ УДАЛОСЬ ЗАВЕРШИТЬ ОПЕРАЦИЮ</p>
-<h1>Попробуем ещё раз<span>?</span>
-</h1>
-<p class="error-message" role="alert">{{ error }}</p>
-<a class="button button-primary" href="{{ url_for('index') }}">{{ icon('back') }}Вернуться в облако</a>
-</section>
-      {% endif %}
-    </main>
-  </div>
-  <dialog id="account-dialog" aria-labelledby="account-title">
-<div class="dialog-heading">
-<span class="category-icon green">{{ icon('lock') }}</span>
-<button type="button" class="icon-button" data-close aria-label="Закрыть">{{ icon('close') }}</button>
-</div>
-<h2 id="account-title">Безопасность аккаунта</h2>
-<p class="dialog-description">{{ user.username }} · Смена пароля</p>
-<form method="post" action="{{ url_for('password') }}">{{ token() }}<label for="old-password">Текущий пароль</label>
-<input id="old-password" name="old_password" type="password" autocomplete="current-password" maxlength="128" required autofocus>
-<label for="change-password">Новый пароль</label>
-<input id="change-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" placeholder="Не менее 12 символов" required>
-<div class="dialog-actions">
-<button type="button" class="button button-secondary" data-close>Отмена</button>
-<button class="button button-primary">Сохранить пароль</button>
-</div>
-</form>
-</dialog>
-{% else %}
-  <div class="auth-layout">
-    <aside class="auth-story">
-      {{ brand() }}
-      <div class="story-content">
-        <span class="story-tag"><span></span>БЕРЕЖНО ХРАНИМ ВАШЕ ВАЖНОЕ</span>
-        <h1>У важных вещей<br>есть <em>своё облако.</em></h1>
-        <p>Немного порядка. Много воздуха.<br>И всё ваше — в одном уютном месте.</p>
-        <figure class="story-sky">{{ sky() }}<figcaption>для файлов, идей и всего, что хочется сохранить</figcaption></figure>
+    {% if user %}
+      <div class="account">
+        <span>{{ user.username }} · {{ 'Администратор' if user.role == 'admin' else 'Пользователь' }}</span>
+        <form method="post" action="{{ url_for('account_action', action='logout') }}">
+          {{ token() }}
+          <button class="secondary">Выйти</button>
+        </form>
       </div>
-      <div class="story-footer"><span class="little-spark" aria-hidden="true">✧</span><span>Сделано для ваших маленьких и больших историй.</span><span class="story-edition">ЛИЧНОЕ НЕБО / 01</span></div>
-    </aside>
-    <main class="auth-main" id="main">
-<div class="auth-mobile-brand">{{ brand() }}</div>
-<div class="auth-form-wrap">
-  <div class="paper-heading"><span>БИЛЕТ В ВАШЕ ОБЛАКО</span><span aria-hidden="true">№ 01</span></div>
-  {{ notices() }}
-      {% if mode == 'error' %}<span class="category-icon red">{{ icon('shield') }}</span>
-<p class="eyebrow">ОПЕРАЦИЯ НЕ ВЫПОЛНЕНА</p>
-<h2>Попробуем ещё раз?</h2>
-<p class="error-message" role="alert">{{ error }}</p>
-<a class="button button-primary" href="{{ url_for('index') }}">{{ icon('back') }}Вернуться в приложение</a>
-      {% else %}
-      <span class="auth-welcome-icon">{{ cloudmark() }}</span>
-<p class="eyebrow">{{ 'НАЧНЁМ С ГЛАВНОГО' if mode == 'setup' else 'БОЛЬШЕ МЕСТА ДЛЯ ВАШЕГО' if mode == 'register' else 'РАДЫ ВАС ВИДЕТЬ' }}</p>
-<h2>{{ 'Ваше облако начинается здесь' if mode == 'setup' else 'Создайте своё облако' if mode == 'register' else 'С возвращением' }}<span>.</span>
-</h2>
-<p class="auth-description">{{ 'Создайте аккаунт администратора, чтобы начать работу.' if mode == 'setup' else 'Личное пространство для ваших файлов и идей.' if mode == 'register' else 'Войдите, чтобы всё важное снова было под рукой.' }}</p>
-      <form class="auth-form" method="post" action="{{ url_for('account_action', action=mode) }}">{{ token() }}<label for="username">Логин</label>
-<input id="username" name="username" autocomplete="username" pattern="[A-Za-z0-9_]{3,24}" maxlength="24" placeholder="Ваш логин" aria-describedby="username-hint" required>
-<p class="input-hint" id="username-hint">3–24 латинских буквы, цифры или знак _</p>
-<label for="password">Пароль</label>
-<div class="password-field">
-<input id="password" name="password" type="password" autocomplete="{{ 'current-password' if mode == 'login' else 'new-password' }}" minlength="12" maxlength="128" placeholder="Не менее 12 символов" required>
-<button type="button" class="icon-button" data-password="password" aria-label="Показать пароль" aria-pressed="false">{{ icon('eye') }}</button>
-</div>{% if mode != 'login' %}<label for="repeat">Повторите пароль</label>
-<input id="repeat" name="repeat" type="password" autocomplete="new-password" minlength="12" maxlength="128" placeholder="Ещё раз, чтобы не ошибиться" required>{% endif %}<button class="button button-primary auth-submit">{{ 'Войти в облако' if mode == 'login' else 'Создать аккаунт' }}{{ icon('arrow') }}</button>
-</form>
-      {% if mode == 'login' %}<p class="auth-switch">Ещё нет аккаунта? <a href="{{ url_for('index', register=1) }}">Создать аккаунт {{ icon('arrow') }}</a>
-</p>{% elif mode == 'register' %}<p class="auth-switch">Уже есть аккаунт? <a href="{{ url_for('index') }}">Войти {{ icon('arrow') }}</a>
-</p>{% endif %}<div class="auth-security">{{ icon('lock') }}<span>Защищённая передача файлов по FTPS</span>
-</div>
-      {% endif %}
-    </div>
-<footer class="auth-footer"><span aria-hidden="true">✧</span> Чуть ближе к своему. Чуть дальше от суеты.</footer>
-</main>
+    {% endif %}
   </div>
-{% endif %}
-<noscript>
-<p class="noscript-notice">Для работы с файлами и настройками включите JavaScript в браузере.</p>
-</noscript>
+</header>
+
+<main class="container">
+  {% for text in get_flashed_messages() %}
+    <p class="notice" role="status">{{ text }}</p>
+  {% endfor %}
+
+  {% if mode == 'error' %}
+    <section class="card">
+      <h1>Операция не выполнена</h1>
+      <p class="error" role="alert">{{ error }}</p>
+      <a href="{{ url_for('index') }}">Вернуться в приложение</a>
+    </section>
+
+  {% elif mode in ['setup', 'login', 'register'] %}
+    <section class="card auth-card">
+      <h1>{{ 'Первый запуск' if mode == 'setup' else 'Регистрация' if mode == 'register' else 'Вход в аккаунт' }}</h1>
+      <p class="muted">{{ 'Создайте аккаунт администратора.' if mode == 'setup' else 'Заполните поля для создания аккаунта.' if mode == 'register' else 'Введите логин и пароль для доступа к файлам.' }}</p>
+      <form method="post" action="{{ url_for('account_action', action=mode) }}">
+        {{ token() }}
+        <label for="username">Логин</label>
+        <input id="username" name="username" autocomplete="username" pattern="[A-Za-z0-9_]{3,24}" maxlength="24" aria-describedby="username-hint" required>
+        <p class="hint" id="username-hint">3–24 латинских буквы, цифры или знак _.</p>
+
+        <label for="password">Пароль</label>
+        <input id="password" name="password" type="password" autocomplete="{{ 'current-password' if mode == 'login' else 'new-password' }}" minlength="12" maxlength="128" aria-describedby="password-hint" required>
+        <p class="hint" id="password-hint">Не менее 12 символов.</p>
+
+        {% if mode != 'login' %}
+          <label for="repeat">Повторите пароль</label>
+          <input id="repeat" name="repeat" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+        {% endif %}
+        <button class="auth-submit">{{ 'Войти' if mode == 'login' else 'Создать аккаунт' }}</button>
+      </form>
+      {% if mode == 'login' %}
+        <p class="auth-link">Нет аккаунта? <a href="{{ url_for('index', register=1) }}">Зарегистрироваться</a></p>
+      {% elif mode == 'register' %}
+        <p class="auth-link">Уже есть аккаунт? <a href="{{ url_for('index') }}">Войти</a></p>
+      {% endif %}
+    </section>
+
+  {% else %}
+    <nav class="tabs" aria-label="Разделы приложения">
+      <a href="{{ url_for('index') }}" {% if mode == 'files' %}aria-current="page"{% endif %}>Мои файлы</a>
+      {% if user.role == 'admin' %}
+        <a href="{{ url_for('index', tab='users') }}" {% if mode == 'users' %}aria-current="page"{% endif %}>Пользователи</a>
+      {% endif %}
+    </nav>
+
+    {% if mode == 'files' %}
+      <section class="card">
+        <h1>Мои файлы</h1>
+        <p class="muted">Использовано {{ used }} из {{ quota }} МБ · Максимальный размер файла: {{ max_file }} МБ</p>
+        <div class="folder-path">
+          <span>Папка: {{ path }}</span>
+          {% if path != '/' %}
+            <a href="{{ url_for('index', path=parent) }}">← На уровень выше</a>
+          {% endif %}
+        </div>
+
+        <div class="file-tools">
+          <section class="tool-block">
+            <h2>Загрузить файл</h2>
+            <form method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+              {{ token() }}
+              <input type="hidden" name="path" value="{{ path }}">
+              <input type="file" name="file" aria-label="Выберите файл" required>
+              <button>Загрузить</button>
+            </form>
+          </section>
+          <section class="tool-block">
+            <h2>Создать папку</h2>
+            <form method="post" action="{{ url_for('folder') }}">
+              {{ token() }}
+              <input type="hidden" name="path" value="{{ path }}">
+              <div class="row">
+                <input name="name" placeholder="Название папки" aria-label="Название папки" maxlength="100" required>
+                <button>Создать</button>
+              </div>
+            </form>
+          </section>
+        </div>
+
+        {% if files %}
+          <div class="file-search" hidden>
+            <label for="file-search">Поиск по названию</label>
+            <input type="search" id="file-search" placeholder="Название файла или папки">
+          </div>
+        {% endif %}
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th scope="col">Название</th><th scope="col">Размер</th><th scope="col">Действия</th></tr>
+            </thead>
+            <tbody>
+              {% for entry in files %}
+                <tr data-name="{{ entry.name }}">
+                  <td>
+                    {% if entry.type == 'dir' %}
+                      <a href="{{ url_for('index', path=join_path(path, entry.name)) }}">{{ entry.name }}/</a>
+                    {% else %}
+                      {{ entry.name }}
+                    {% endif %}
+                  </td>
+                  <td class="file-size">{{ 'Папка' if entry.type == 'dir' else size(entry.size) }}</td>
+                  <td>
+                    <div class="actions">
+                      {% if entry.type == 'file' %}
+                        <a href="{{ url_for('download', path=join_path(path, entry.name)) }}" download>Скачать</a>
+                      {% endif %}
+                      <details class="delete-confirm">
+                        <summary>Удалить</summary>
+                        <form method="post" action="{{ url_for('delete') }}">
+                          {{ token() }}
+                          <input type="hidden" name="path" value="{{ join_path(path, entry.name) }}">
+                          <p class="hint">Удалить безвозвратно?</p>
+                          <button class="danger">Да, удалить</button>
+                        </form>
+                      </details>
+                    </div>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="3" class="empty">Папка пуста. Загрузите файл или создайте папку.</td></tr>
+              {% endfor %}
+              <tr id="no-results" hidden><td colspan="3" class="empty" role="status">Ничего не найдено.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="hint table-note">Удалённые файлы не восстанавливаются. Папку можно удалить, только если она пустая.</p>
+      </section>
+
+    {% elif mode == 'users' %}
+      <section class="card">
+        <h1>Пользователи</h1>
+        <section class="tool-block">
+          <h2>Новый пользователь</h2>
+          <form class="row" method="post" action="{{ url_for('admin_create') }}">
+            {{ token() }}
+            <input name="username" aria-label="Логин нового пользователя" placeholder="Логин" pattern="[A-Za-z0-9_]{3,24}" maxlength="24" required>
+            <input name="password" type="password" autocomplete="new-password" aria-label="Пароль нового пользователя" placeholder="Пароль: от 12 символов" minlength="12" maxlength="128" required>
+            <button>Создать пользователя</button>
+          </form>
+        </section>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th scope="col">Логин</th><th scope="col">Роль</th><th scope="col">Доступ</th><th scope="col">Действия</th></tr>
+            </thead>
+            <tbody>
+              {% for item in users %}
+                <tr>
+                  <td>{{ item.username }}{% if item.id == user.id %} <span class="hint">(вы)</span>{% endif %}</td>
+                  <td>{{ 'Администратор' if item.role == 'admin' else 'Пользователь' }}</td>
+                  <td><span class="status {{ 'inactive' if not item.active }}">{{ 'Активен' if item.active else 'Отключён' }}</span></td>
+                  <td class="user-actions">
+                    <details>
+                      <summary>Изменить роль</summary>
+                      <form method="post" action="{{ url_for('admin_update', user_id=item.id) }}">
+                        {{ token() }}
+                        <input type="hidden" name="action" value="role">
+                        <input type="hidden" name="value" value="{{ 'user' if item.role == 'admin' else 'admin' }}">
+                        <button class="secondary">Сделать {{ 'пользователем' if item.role == 'admin' else 'администратором' }}</button>
+                      </form>
+                    </details>
+                    <details>
+                      <summary>{{ 'Отключить' if item.active else 'Включить' }} аккаунт</summary>
+                      <form method="post" action="{{ url_for('admin_update', user_id=item.id) }}">
+                        {{ token() }}
+                        <input type="hidden" name="action" value="active">
+                        <input type="hidden" name="value" value="{{ '0' if item.active else '1' }}">
+                        <button class="secondary">Подтвердить</button>
+                      </form>
+                    </details>
+                    <details>
+                      <summary>Сбросить пароль</summary>
+                      <form method="post" action="{{ url_for('admin_update', user_id=item.id) }}">
+                        {{ token() }}
+                        <input type="hidden" name="action" value="password">
+                        <input name="value" type="password" autocomplete="new-password" aria-label="Новый пароль для {{ item.username }}" placeholder="Не менее 12 символов" minlength="12" maxlength="128" required>
+                        <button>Сохранить</button>
+                      </form>
+                    </details>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    {% endif %}
+
+    <section class="card password-card">
+      <details>
+        <summary>Сменить свой пароль</summary>
+        <form class="password-form" method="post" action="{{ url_for('password') }}">
+          {{ token() }}
+          <label for="old-password">Текущий пароль</label>
+          <input id="old-password" name="old_password" type="password" autocomplete="current-password" maxlength="128" required>
+          <label for="new-password">Новый пароль (от 12 символов)</label>
+          <input id="new-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+          <button>Сохранить пароль</button>
+        </form>
+      </details>
+    </section>
+  {% endif %}
+</main>
+<footer class="footer container">Моё облако · Передача файлов по FTPS</footer>
 </body>
 </html>
