@@ -7,6 +7,7 @@ import threading
 import time
 
 from collections import defaultdict, deque
+from contextlib import contextmanager
 from datetime import timedelta
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -31,6 +32,7 @@ from werkzeug.exceptions import (
 )
 
 from database import Database
+from file_records import FileRecords
 from storage import (
     Storage,
     join_path,
@@ -44,6 +46,16 @@ BASE = Path(__file__).resolve().parent
 MAX_FILE = 20 * 1024 * 1024
 QUOTA = 100 * 1024 * 1024
 WEB_PORT = 8080
+ACTIVITY_LABELS = {
+    "upload": "Добавил файл",
+    "folder": "Создал папку",
+    "delete": "Переместил в корзину",
+    "restore": "Восстановил из корзины",
+    "purge": "Удалил навсегда",
+    "rename": "Переименовал",
+    "share": "Создал общую ссылку",
+    "unshare": "Отключил общую ссылку",
+}
 
 
 def create_app(directory=None):
@@ -61,6 +73,7 @@ def create_app(directory=None):
     database = Database(
         directory / "accounts.sqlite3"
     )
+    records = FileRecords(database)
 
     storage = Storage(
         directory,
@@ -90,6 +103,7 @@ def create_app(directory=None):
 
     app.extensions.update(
         database=database,
+        records=records,
         storage=storage,
         attempts=attempts,
     )
@@ -116,7 +130,23 @@ def create_app(directory=None):
 
             queue.append(now)
 
+    def auth_next(value):
+        try:
+            target = urlsplit(value)
+        except ValueError:
+            return ""
+        if (
+            not target.scheme and not target.netloc
+            and target.path.startswith("/s/")
+            and not any(ord(character) < 32 for character in value)
+        ):
+            return value
+        return ""
+
     def page(mode, **values):
+        values.setdefault("shared", None)
+        values.setdefault("sort", "name")
+        values.setdefault("next_url", auth_next(request.values.get("next", "")))
         return render_template(
             "page.html",
             mode=mode,
@@ -128,6 +158,7 @@ def create_app(directory=None):
             max_file=MAX_FILE // 1048576,
             quota=QUOTA // 1048576,
             join_path=join_path,
+            activity_labels=ACTIVITY_LABELS,
             **values,
         )
 
@@ -161,7 +192,7 @@ def create_app(directory=None):
 
         session.permanent = True
 
-    def entries(client, path):
+    def entries(client, path, sort="name"):
         client.cwd(safe_path(path))
         result = []
 
@@ -174,6 +205,10 @@ def create_app(directory=None):
                     {
                         "name": safe_name(name),
                         "type": facts["type"],
+                        "extension": (
+                            name.rsplit(".", 1)[-1].casefold()
+                            if facts["type"] == "file" and "." in name else ""
+                        ),
                         "size": int(
                             facts.get("size", 0)
                         ),
@@ -184,6 +219,8 @@ def create_app(directory=None):
             result,
             key=lambda entry: (
                 entry["type"] != "dir",
+                entry["extension"] if sort == "type"
+                else entry["size"] if sort == "size" else "",
                 entry["name"].casefold(),
             ),
         )
@@ -211,6 +248,73 @@ def create_app(directory=None):
                 "Файл или папка с таким именем "
                 "уже существует."
             )
+
+    def selected_entry(client, path):
+        if path == "/":
+            raise ValueError("Выберите файл или папку, а не корневой каталог.")
+        parent, name = path.rsplit("/", 1)
+        selected = next((item for item in entries(client, parent or "/")
+                         if item["name"] == name), None)
+        if selected is None:
+            abort(404, description="Файл или папка не найдены.")
+        return selected
+
+    def selected_sort():
+        value = request.args.get("sort", "name")
+        return value if value in {"name", "type", "size"} else "name"
+
+    def download_file(owner, path):
+        if path == "/":
+            raise ValueError("Выберите файл.")
+        output = tempfile.SpooledTemporaryFile(max_size=1048576, mode="w+b")
+        try:
+            with storage.lock(owner["id"]), storage.connect(owner) as client:
+                client.retrbinary("RETR " + path, output.write)
+            size = output.tell()
+            output.seek(0)
+            response = send_file(
+                output, as_attachment=True,
+                download_name=path.rsplit("/", 1)[-1],
+                mimetype="application/octet-stream", conditional=False,
+            )
+            response.content_length = size
+            response.call_on_close(output.close)
+            return response
+        except Exception:
+            output.close()
+            raise
+
+    @contextmanager
+    def shared_access(token):
+        need_user()
+        shared = records.share(token)
+        if shared is None:
+            abort(404, description="Ссылка недействительна или доступ отключён.")
+        with storage.lock(shared["owner_id"]):
+            # Recheck after acquiring the lock: the owner may have revoked it.
+            shared = records.share(token)
+            if shared is None:
+                abort(404, description="Доступ по ссылке отключён.")
+            owner = database.get(shared["owner_id"])
+            storage.usage(owner)  # Reject symbolic links, as in the private file view.
+            yield shared, owner
+
+    def shared_path(shared, relative):
+        relative = safe_path(relative)
+        return safe_path(shared["path"] + (relative if relative != "/" else ""))
+
+    def purge_tree(client, path):
+        for name, facts in list(client.mlsd(path)):
+            if facts.get("type") not in {"file", "dir"}:
+                continue
+            # Interrupted uploads can leave an internal .upload-* file.
+            safe_name(name[1:] if name.startswith(".") else name)
+            child = path + "/" + name
+            if facts["type"] == "dir":
+                purge_tree(client, child)
+            else:
+                client.delete(child)
+        client.rmd(path)
 
     @app.before_request
     def protect():
@@ -315,9 +419,8 @@ def create_app(directory=None):
         return page(
             "error",
             error=(
-                "Операция FTP не выполнена. "
-                "Проверьте путь. "
-                "Папку можно удалить только пустой."
+                "Операция с файлом не выполнена. "
+                "Проверьте, что файл и родительская папка существуют."
             ),
         ), 400
 
@@ -374,6 +477,21 @@ def create_app(directory=None):
                 users=database.users(),
             )
 
+        if request.args.get("tab") == "trash":
+            return page("trash", items=records.trash_items(g.user["id"]))
+
+        if request.args.get("tab") == "history":
+            number = max(1, min(1000000, request.args.get("page", 1, type=int) or 1))
+            events = records.history(g.user["id"], (number - 1) * 50)
+            return page("history", events=events[:50], number=number, more=len(events) > 50)
+
+        if request.args.get("tab") == "shared":
+            return page(
+                "shared", own_shares=records.own_shares(g.user["id"]),
+                received_shares=records.received_shares(g.user["id"]),
+                created=request.args.get("created", ""),
+            )
+
         path = safe_path(
             request.args.get("path", "/")
         )
@@ -382,7 +500,7 @@ def create_app(directory=None):
             storage.lock(g.user["id"]),
             storage.connect(g.user) as client,
         ):
-            files = entries(client, path)
+            files = entries(client, path, selected_sort())
             used = storage.usage(g.user)[0]
 
         return page(
@@ -391,6 +509,7 @@ def create_app(directory=None):
             parent=path.rsplit("/", 1)[0] or "/",
             files=files,
             used=round(used / 1048576, 2),
+            sort=selected_sort(),
         )
 
     @app.post("/account/<action>")
@@ -455,7 +574,7 @@ def create_app(directory=None):
 
         sign_in(user)
 
-        return redirect(url_for("index"))
+        return redirect(auth_next(request.form.get("next", "")) or url_for("index"))
 
     @app.post("/password")
     def password():
@@ -513,6 +632,11 @@ def create_app(directory=None):
             )
 
             client.mkd(target)
+            try:
+                records.log(user, "folder", target)
+            except Exception:
+                client.rmd(target)
+                raise
 
         flash("Папка создана.")
 
@@ -582,6 +706,11 @@ def create_app(directory=None):
                         temporary,
                         target,
                     )
+                    try:
+                        records.log(user, "upload", target)
+                    except Exception:
+                        client.delete(target)
+                        raise
 
                 except Exception:
                     try:
@@ -599,101 +728,142 @@ def create_app(directory=None):
     @app.get("/download")
     def download():
         user = need_user()
-
-        path = safe_path(
-            request.args.get("path", "")
-        )
-
-        if path == "/":
-            raise ValueError(
-                "Выберите файл."
-            )
-
-        output = tempfile.SpooledTemporaryFile(
-            max_size=1048576,
-            mode="w+b",
-        )
-
-        try:
-            with (
-                storage.lock(user["id"]),
-                storage.connect(user) as client,
-            ):
-                client.retrbinary(
-                    "RETR " + path,
-                    output.write,
-                )
-
-            size = output.tell()
-            output.seek(0)
-
-            response = send_file(
-                output,
-                as_attachment=True,
-                download_name=path.rsplit("/", 1)[-1],
-                mimetype="application/octet-stream",
-                conditional=False,
-            )
-
-            response.content_length = size
-            response.call_on_close(output.close)
-
-            return response
-
-        except Exception:
-            output.close()
-            raise
+        return download_file(user, safe_path(request.args.get("path", "")))
 
     @app.post("/delete")
     def delete():
         user = need_user()
-
-        path = safe_path(
-            request.form.get("path", "")
-        )
-
-        if path == "/":
-            raise ValueError(
-                "Нельзя удалить корневую папку."
-            )
-
+        path = safe_path(request.form.get("path", ""))
         parent, name = path.rsplit("/", 1)
-
         with (
             storage.lock(user["id"]),
             storage.connect(user) as client,
         ):
-            selected = next(
-                (
-                    entry
-                    for entry in entries(
-                        client,
-                        parent or "/",
-                    )
-                    if entry["name"] == name
-                ),
-                None,
-            )
+            selected = selected_entry(client, path)
+            try:
+                client.cwd("/.trash")
+            except ftplib.error_perm:
+                client.mkd("/.trash")
+            item_id = secrets.token_hex(16)
+            destination = "/.trash/" + item_id
+            client.rename(path, destination)
+            try:
+                records.add_trash(user, item_id, path, selected["type"])
+            except Exception:
+                client.rename(destination, path)
+                raise
+        flash("Перемещено в корзину. Файл или папку можно восстановить.")
+        return redirect(url_for("index", path=parent or "/"))
 
-            if selected is None:
-                abort(
-                    404,
-                    description="Файл не найден.",
-                )
+    @app.post("/rename")
+    def rename():
+        user = need_user()
+        path = safe_path(request.form.get("path", ""))
+        name = safe_name(request.form.get("name", ""))
+        parent = path.rsplit("/", 1)[0] or "/"
+        destination = join_path(parent, name)
+        with storage.lock(user["id"]), storage.connect(user) as client:
+            selected = selected_entry(client, path)
+            if destination == path:
+                return redirect(url_for("index", path=parent))
+            if any(item["name"].casefold() == name.casefold()
+                   and join_path(parent, item["name"]) != path
+                   for item in entries(client, parent)):
+                raise ValueError("Файл или папка с таким именем уже существует.")
+            client.rename(path, destination)
+            try:
+                records.rename(user, path, destination, is_folder=selected["type"] == "dir")
+            except Exception:
+                client.rename(destination, path)
+                raise
+        flash("Название изменено.")
+        return redirect(url_for("index", path=parent))
 
-            if selected["type"] == "dir":
-                client.rmd(path)
+    @app.post("/trash/<item_id>/restore")
+    def restore(item_id):
+        user = need_user()
+        with storage.lock(user["id"]), storage.connect(user) as client:
+            item = records.trash_item(user["id"], item_id)
+            if item is None:
+                abort(404, description="Объект в корзине не найден.")
+            path = safe_path(item["original_path"])
+            parent, name = path.rsplit("/", 1)
+            try:
+                siblings = entries(client, parent or "/")
+            except ftplib.error_perm:
+                raise ValueError("Исходная папка отсутствует. Сначала восстановите её из корзины.")
+            if any(entry["name"].casefold() == name.casefold() for entry in siblings):
+                raise ValueError("По исходному пути уже есть объект с таким именем. Переименуйте его перед восстановлением.")
+            source = "/.trash/" + item["id"]
+            client.rename(source, path)
+            try:
+                records.finish_trash(user, item, "restore")
+            except Exception:
+                client.rename(path, source)
+                raise
+        flash("Восстановлено в исходную папку.")
+        return redirect(url_for("index", tab="trash"))
+
+    @app.post("/trash/<item_id>/purge")
+    def purge(item_id):
+        user = need_user()
+        with storage.lock(user["id"]), storage.connect(user) as client:
+            storage.usage(user)  # Never follow filesystem links while removing a tree.
+            item = records.trash_item(user["id"], item_id)
+            if item is None:
+                abort(404, description="Объект в корзине не найден.")
+            source = "/.trash/" + item["id"]
+            if item["kind"] == "dir":
+                purge_tree(client, source)
             else:
-                client.delete(path)
+                client.delete(source)
+            records.finish_trash(user, item, "purge")
+        flash("Удалено навсегда.")
+        return redirect(url_for("index", tab="trash"))
 
-        flash("Удалено.")
+    @app.post("/share")
+    def share():
+        user = need_user()
+        rate_limit(("share", user["id"]))
+        path = safe_path(request.form.get("path", ""))
+        with storage.lock(user["id"]), storage.connect(user) as client:
+            if selected_entry(client, path)["type"] != "dir":
+                raise ValueError("Поделиться можно только папкой.")
+            token = records.create_share(user, path)
+        flash("Ссылка создана. Доступны только просмотр и скачивание после входа.")
+        return redirect(url_for("index", tab="shared", created=token))
 
-        return redirect(
-            url_for(
-                "index",
-                path=parent or "/",
+    @app.post("/share/<token>/revoke")
+    def revoke_share(token):
+        user = need_user()
+        with storage.lock(user["id"]):
+            records.revoke_share(user, token)
+        flash("Доступ по ссылке отключён.")
+        return redirect(url_for("index", tab="shared"))
+
+    @app.get("/s/<token>")
+    def shared_folder(token):
+        if not g.user:
+            return redirect(url_for("index", next=request.full_path.rstrip("?")))
+        relative = safe_path(request.args.get("path", "/"))
+        with shared_access(token) as (shared, owner):
+            with storage.connect(owner) as client:
+                files = entries(client, shared_path(shared, relative), selected_sort())
+            records.remember_share(g.user["id"], token)
+            return page(
+                "shared_files", shared=shared, files=files, path=relative,
+                parent=relative.rsplit("/", 1)[0] or "/", sort=selected_sort(),
             )
-        )
+
+    @app.get("/s/<token>/download")
+    def shared_download(token):
+        if not g.user:
+            return redirect(url_for("index", next=request.full_path.rstrip("?")))
+        relative = safe_path(request.args.get("path", "/"))
+        if relative == "/":
+            raise ValueError("Выберите файл.")
+        with shared_access(token) as (shared, owner):
+            return download_file(owner, shared_path(shared, relative))
 
     @app.post("/admin/create")
     def admin_create():

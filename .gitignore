@@ -218,3 +218,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local file storage and database backups
+data/files/
+data/backups/
+data/accounts.sqlite3-journal
+data/accounts.sqlite3-wal
+data/accounts.sqlite3-shm

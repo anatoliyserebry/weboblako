@@ -1,0 +1,96 @@
+{% if mode == 'trash' %}
+  <section class="card">
+    <h1>Корзина</h1>
+    <p class="muted">Восстановление возвращает файл или папку на прежнее место. Корзина занимает место в хранилище.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th scope="col">Исходный путь</th><th scope="col">Тип</th><th scope="col">Удалено (UTC)</th><th scope="col">Действия</th></tr></thead>
+        <tbody>
+          {% for item in items %}
+            <tr>
+              <td>{{ item.original_path }}</td>
+              <td>{{ 'Папка' if item.kind == 'dir' else 'Файл' }}</td>
+              <td class="timestamp">{{ item.deleted_at }}</td>
+              <td>
+                <div class="actions">
+                  <form method="post" action="{{ url_for('restore', item_id=item.id) }}">
+                    {{ token() }}<button class="secondary">Восстановить</button>
+                  </form>
+                  <details class="delete-confirm">
+                    <summary>Удалить навсегда</summary>
+                    <form method="post" action="{{ url_for('purge', item_id=item.id) }}">
+                      {{ token() }}
+                      <p class="hint">Восстановить после этого не получится.</p>
+                      <button class="danger">Да, удалить навсегда</button>
+                    </form>
+                  </details>
+                </div>
+              </td>
+            </tr>
+          {% else %}<tr><td colspan="4" class="empty">Корзина пуста.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+{% elif mode == 'history' %}
+  <section class="card">
+    <h1>История действий</h1>
+    <p class="muted">Добавление, удаление, переименование, восстановление и управление общими ссылками.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th scope="col">Время (UTC)</th><th scope="col">Кто</th><th scope="col">Действие</th><th scope="col">Файл или папка</th></tr></thead>
+        <tbody>
+          {% for event in events %}
+            <tr>
+              <td class="timestamp">{{ event.created_at }}</td><td>{{ event.actor }}</td>
+              <td>{{ activity_labels.get(event.action, event.action) }}</td>
+              <td>{{ event.path }}{% if event.new_path %}<br>→ {{ event.new_path }}{% endif %}</td>
+            </tr>
+          {% else %}<tr><td colspan="4" class="empty">Здесь появятся действия с вашими файлами.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if number > 1 or more %}
+      <nav class="pagination" aria-label="Страницы истории">
+        {% if number > 1 %}<a href="{{ url_for('index', tab='history', page=number-1) }}">← Назад</a>{% endif %}
+        <span>Страница {{ number }}</span>
+        {% if more %}<a href="{{ url_for('index', tab='history', page=number+1) }}">Далее →</a>{% endif %}
+      </nav>
+    {% endif %}
+  </section>
+
+{% elif mode == 'shared' %}
+  <section class="card">
+    <h1>Общие папки</h1>
+    <p class="muted">По ссылке можно просматривать и скачивать файлы после входа. Изменять содержимое может только владелец.</p>
+    <h2 class="section-heading">Мои ссылки</h2>
+    <p class="hint">Чтобы создать ссылку, откройте «Поделиться» рядом с нужной папкой в разделе «Мои файлы».</p>
+    {% for item in own_shares %}
+      <div class="share-item {% if item.token == created %}share-created{% endif %}">
+        <div class="row">
+          <strong>{{ item.path }}</strong>
+          <a href="{{ url_for('shared_folder', token=item.token) }}">Открыть</a>
+        </div>
+        <label for="share-{{ loop.index }}">Ссылка на папку</label>
+        <input id="share-{{ loop.index }}" class="share-url" value="{{ url_for('shared_folder', token=item.token, _external=True) }}" readonly>
+        <form method="post" action="{{ url_for('revoke_share', token=item.token) }}">
+          {{ token() }}<button class="secondary">Отключить ссылку</button>
+        </form>
+      </div>
+    {% else %}<p class="muted">Вы пока не делились папками.</p>{% endfor %}
+
+    <h2 class="section-heading">Со мной поделились</h2>
+    <p class="hint">Откройте полученную ссылку — папка появится в этом списке.</p>
+    <div class="table-scroll shared-list">
+      <table>
+        <thead><tr><th scope="col">Папка</th><th scope="col">Владелец</th><th scope="col">Доступ</th></tr></thead>
+        <tbody>
+          {% for item in received_shares %}
+            <tr><td><a href="{{ url_for('shared_folder', token=item.token) }}">{{ item.path.rsplit('/', 1)[-1] }}</a></td><td>{{ item.owner_name }}</td><td>Только чтение</td></tr>
+          {% else %}<tr><td colspan="3" class="empty">Нет общих папок.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endif %}

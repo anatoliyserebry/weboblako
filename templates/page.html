@@ -55,6 +55,7 @@
       <p class="muted">{{ 'Создайте аккаунт администратора.' if mode == 'setup' else 'Заполните поля для создания аккаунта.' if mode == 'register' else 'Введите логин и пароль для доступа к файлам.' }}</p>
       <form method="post" action="{{ url_for('account_action', action=mode) }}">
         {{ token() }}
+        {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
         <label for="username">Логин</label>
         <input id="username" name="username" autocomplete="username" pattern="[A-Za-z0-9_]{3,24}" maxlength="24" aria-describedby="username-hint" required>
         <p class="hint" id="username-hint">3–24 латинских буквы, цифры или знак _.</p>
@@ -70,102 +71,27 @@
         <button class="auth-submit">{{ 'Войти' if mode == 'login' else 'Создать аккаунт' }}</button>
       </form>
       {% if mode == 'login' %}
-        <p class="auth-link">Нет аккаунта? <a href="{{ url_for('index', register=1) }}">Зарегистрироваться</a></p>
+        <p class="auth-link">Нет аккаунта? <a href="{{ url_for('index', register=1, next=next_url) }}">Зарегистрироваться</a></p>
       {% elif mode == 'register' %}
-        <p class="auth-link">Уже есть аккаунт? <a href="{{ url_for('index') }}">Войти</a></p>
+        <p class="auth-link">Уже есть аккаунт? <a href="{{ url_for('index', next=next_url) }}">Войти</a></p>
       {% endif %}
     </section>
 
   {% else %}
     <nav class="tabs" aria-label="Разделы приложения">
       <a href="{{ url_for('index') }}" {% if mode == 'files' %}aria-current="page"{% endif %}>Мои файлы</a>
+      <a href="{{ url_for('index', tab='shared') }}" {% if mode in ['shared', 'shared_files'] %}aria-current="page"{% endif %}>Общие папки</a>
+      <a href="{{ url_for('index', tab='trash') }}" {% if mode == 'trash' %}aria-current="page"{% endif %}>Корзина</a>
+      <a href="{{ url_for('index', tab='history') }}" {% if mode == 'history' %}aria-current="page"{% endif %}>История</a>
       {% if user.role == 'admin' %}
         <a href="{{ url_for('index', tab='users') }}" {% if mode == 'users' %}aria-current="page"{% endif %}>Пользователи</a>
       {% endif %}
     </nav>
 
-    {% if mode == 'files' %}
-      <section class="card">
-        <h1>Мои файлы</h1>
-        <p class="muted">Использовано {{ used }} из {{ quota }} МБ · Максимальный размер файла: {{ max_file }} МБ</p>
-        <div class="folder-path">
-          <span>Папка: {{ path }}</span>
-          {% if path != '/' %}
-            <a href="{{ url_for('index', path=parent) }}">← На уровень выше</a>
-          {% endif %}
-        </div>
-
-        <div class="file-tools">
-          <section class="tool-block">
-            <h2>Загрузить файл</h2>
-            <form method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data">
-              {{ token() }}
-              <input type="hidden" name="path" value="{{ path }}">
-              <input type="file" name="file" aria-label="Выберите файл" required>
-              <button>Загрузить</button>
-            </form>
-          </section>
-          <section class="tool-block">
-            <h2>Создать папку</h2>
-            <form method="post" action="{{ url_for('folder') }}">
-              {{ token() }}
-              <input type="hidden" name="path" value="{{ path }}">
-              <div class="row">
-                <input name="name" placeholder="Название папки" aria-label="Название папки" maxlength="100" required>
-                <button>Создать</button>
-              </div>
-            </form>
-          </section>
-        </div>
-
-        {% if files %}
-          <div class="file-search" hidden>
-            <label for="file-search">Поиск по названию</label>
-            <input type="search" id="file-search" placeholder="Название файла или папки">
-          </div>
-        {% endif %}
-        <div class="table-scroll">
-          <table>
-            <thead>
-              <tr><th scope="col">Название</th><th scope="col">Размер</th><th scope="col">Действия</th></tr>
-            </thead>
-            <tbody>
-              {% for entry in files %}
-                <tr data-name="{{ entry.name }}">
-                  <td>
-                    {% if entry.type == 'dir' %}
-                      <a href="{{ url_for('index', path=join_path(path, entry.name)) }}">{{ entry.name }}/</a>
-                    {% else %}
-                      {{ entry.name }}
-                    {% endif %}
-                  </td>
-                  <td class="file-size">{{ 'Папка' if entry.type == 'dir' else size(entry.size) }}</td>
-                  <td>
-                    <div class="actions">
-                      {% if entry.type == 'file' %}
-                        <a href="{{ url_for('download', path=join_path(path, entry.name)) }}" download>Скачать</a>
-                      {% endif %}
-                      <details class="delete-confirm">
-                        <summary>Удалить</summary>
-                        <form method="post" action="{{ url_for('delete') }}">
-                          {{ token() }}
-                          <input type="hidden" name="path" value="{{ join_path(path, entry.name) }}">
-                          <p class="hint">Удалить безвозвратно?</p>
-                          <button class="danger">Да, удалить</button>
-                        </form>
-                      </details>
-                    </div>
-                  </td>
-                </tr>
-              {% else %}
-                <tr><td colspan="3" class="empty">Папка пуста. Загрузите файл или создайте папку.</td></tr>
-              {% endfor %}
-              <tr id="no-results" hidden><td colspan="3" class="empty" role="status">Ничего не найдено.</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="hint table-note">Удалённые файлы не восстанавливаются. Папку можно удалить, только если она пустая.</p>
-      </section>
+    {% if mode in ['files', 'shared_files'] %}
+      {% include '_files.html' %}
+    {% elif mode in ['trash', 'history', 'shared'] %}
+      {% include '_file_pages.html' %}
 
     {% elif mode == 'users' %}
       <section class="card">

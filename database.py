@@ -36,6 +36,7 @@ class Database:
                 timeout=10,
             )
             connection.row_factory = sqlite3.Row
+            connection.execute("PRAGMA foreign_keys = ON")
 
             try:
                 with connection:

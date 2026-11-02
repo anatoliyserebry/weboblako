@@ -18,3 +18,8 @@ if (search) {
     noResults.hidden = visible > 0;
   });
 }
+
+// Выделяем ссылку целиком, чтобы её было удобно скопировать.
+for (const input of document.querySelectorAll(".share-url")) {
+  input.addEventListener("click", () => input.select());
+}
