@@ -1,0 +1,47 @@
+{# Original vector artwork shared by the entry screen and the file workspace. #}
+{% macro cloudmark() -%}
+<svg class="cloudmark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+  <path d="M9 30.5c-5-6.5.6-13.4 7-11.2C14.8 8 31 6 33.7 17.1c9.5-1 12 11.7 4 14.2-6.1 2-22.9 2.4-28.7-.8Z" fill="currentColor" fill-opacity=".1"/>
+  <path d="M9 30.5c-5-6.5.6-13.4 7-11.2C14.8 8 31 6 33.7 17.1c9.5-1 12 11.7 4 14.2-6.1 2-22.9 2.4-28.7-.8Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+  <path d="m36 5 .7 3.4L40 9l-3.3.8L36 13l-.7-3.2L32 9l3.3-.6L36 5ZM17 37.5c3.5 1 7.5 1 11 .2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+{%- endmacro %}
+
+{% macro sky() -%}
+<svg class="sky-drawing" viewBox="0 0 560 340" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <!-- A small paper archive resting on its own patch of sky. -->
+  <ellipse cx="279" cy="204" rx="217" ry="91" fill="#e8eddf" fill-opacity=".65" transform="rotate(-8 279 204)"/>
+  <path class="sky-flight" d="M80 225C-1 149 152 72 324 93c131 16 204 101 158 150-40 43-127 37-161 29" stroke="#9eaf91" stroke-width="1.2" stroke-dasharray="3 6" stroke-linecap="round"/>
+  <path d="M153 279c-43-2-58-28-40-46 10-10 23-10 35-7-2-23 23-44 47-32 10-40 78-45 96-8 28-29 78-14 81 20 42-6 65 26 47 51-13 18-43 24-84 25l-182-3Z" fill="#fffdf5" stroke="#a6b59b" stroke-width="1.5"/>
+  <path d="M129 260c18 10 50 11 68 10m131-1c30 1 57-4 67-12" stroke="#d8ddca" stroke-width="1.5" stroke-linecap="round"/>
+  <g class="sky-folder" transform="rotate(-7 273 182)">
+    <path d="M209 128c0-5 3-8 8-8h34l13 15h63c5 0 8 3 8 8v79H209v-94Z" fill="#b7c7a5" stroke="#7f9972" stroke-width="1.5"/>
+    <path d="m225 114 81 5-4 93-81-5 4-93Z" fill="#fffdf5" stroke="#c5c9b6" stroke-width="1.3"/>
+    <path d="m237 137 52 3m-53 8 39 2m-40 9 47 2" stroke="#c3cbb8" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="m245 103 62-2 2 106-62 2-2-106Z" fill="#f4e9c9" stroke="#c3b590" stroke-width="1.3"/>
+    <path d="m257 119 32-1m-32 9 29-1m-29 9 17-1" stroke="#c4b78f" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M211 152h125l-9 80c-.4 4-4 7-8 7H218c-5 0-9-3-9-8l-6-71c-.4-5 3-8 8-8Z" fill="#d5dfc3" stroke="#7f9972" stroke-width="1.5"/>
+    <rect x="242" y="177" width="60" height="29" rx="4" fill="#edf0df" stroke="#b5c1a2"/>
+    <path d="M254 187h36m-30 8h24" stroke="#8da07e" stroke-width="1.4" stroke-linecap="round"/>
+  </g>
+  <g class="sky-postcard" transform="rotate(12 415 122)">
+    <rect x="371" y="80" width="78" height="91" rx="5" fill="#fffdf6" stroke="#c3c5af" stroke-width="1.3"/>
+    <path d="M381 91h58v53h-58z" fill="#ebe5ee"/>
+    <circle cx="422" cy="104" r="7" fill="#d6c5af"/>
+    <path d="m381 137 18-21 14 14 10-8 16 16v6h-58v-7Z" fill="#b8c5ae"/>
+    <path d="m388 157 42 0" stroke="#d5d5c4" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <g class="sky-note" transform="rotate(-13 118 155)">
+    <path d="M83 116h57l13 14v66H83v-80Z" fill="#eeebf3" stroke="#b9afc4" stroke-width="1.3"/>
+    <path d="M140 116v15h13" stroke="#b9afc4" stroke-width="1.3"/>
+    <path d="M96 146h43m-43 10h35m-35 10h39m-39 10h20" stroke="#bab2c4" stroke-width="1.4" stroke-linecap="round"/>
+  </g>
+  <path d="M432 51c10 8 13 19 7 28m-7-5 7 5 4-8" stroke="#8fa082" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m174 72 2.5 8 8 2.5-8 2.5-2.5 8-2.5-8-8-2.5 8-2.5 2.5-8Z" fill="#d9c891"/>
+  <path d="m452 234 2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Z" fill="#a7ba96"/>
+  <circle cx="328" cy="55" r="3" fill="#b2bea3"/>
+  <circle cx="67" cy="186" r="2" fill="#c2b5c9"/>
+  <path d="M214 306c35 8 72 8 106 0" stroke="#b1bba2" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M236 315c21 3 43 3 65-1" stroke="#d3d8c6" stroke-width="1.2" stroke-linecap="round"/>
+</svg>
+{%- endmacro %}

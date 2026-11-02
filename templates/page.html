@@ -3,14 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f7f9f8">
+  <meta name="theme-color" content="#f7f6ee">
   <title>{{ 'Пользователи' if mode == 'users' else 'Мои файлы' if mode == 'files' else 'Добро пожаловать' }} · Моё облако</title>
   <link rel="icon" href="{{ url_for('static', filename='cloud.svg') }}" type="image/svg+xml">
   <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='sky.css') }}">
   <script src="{{ url_for('static', filename='app.js') }}" defer>
 </script>
 </head>
 <body class="{{ 'workspace' if user else 'auth-page' }}">
+{% from '_sky.html' import sky, cloudmark %}
 <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <symbol id="i-cloud" viewBox="0 0 24 24">
 <path d="M6.5 18a4.5 4.5 0 0 1-.6-9A6.5 6.5 0 0 1 18.5 8a5 5 0 0 1 0 10Z"/>
@@ -107,11 +109,12 @@
 </use>
 </svg>{%- endmacro %}
 {% macro token() -%}<input type="hidden" name="csrf" value="{{ csrf }}">{%- endmacro %}
-{% macro brand() -%}<a class="brand" href="{{ url_for('index') }}">
-<span class="brand-mark">{{ icon('cloud') }}</span>
-<span>моё облако<span class="brand-dot">.</span>
-</span>
-</a>{%- endmacro %}
+{% macro brand() -%}
+<a class="brand" href="{{ url_for('index') }}">
+  <span class="brand-mark">{{ cloudmark() }}</span>
+  <span class="brand-wordmark">моё облако<span class="brand-dot">.</span><small>ваше маленькое небо</small></span>
+</a>
+{%- endmacro %}
 {% macro notices() -%}
   {% for text in get_flashed_messages() %}<div class="notice" role="status">{{ icon('check') }}<span>{{ text }}</span>
 <button type="button" class="icon-button" data-dismiss aria-label="Закрыть уведомление">{{ icon('close') }}</button>
@@ -182,18 +185,18 @@
         {% elif ext in ['pdf', 'doc', 'docx', 'txt', 'md', 'odt', 'rtf', 'xls', 'xlsx', 'csv', 'ppt', 'pptx'] %}{% set counts.documents = counts.documents + 1 %}
         {% else %}{% set counts.other = counts.other + 1 %}{% endif %}
       {% endfor %}
-      <section class="page-heading">
-<div>
-<p class="eyebrow">ВАШЕ ЦИФРОВОЕ ПРОСТРАНСТВО</p>
-<h1>Всё на своём месте<span>.</span>
-</h1>
-<p class="page-description">Храните важное. Находите нужное. Занимайтесь своим.</p>
-</div>
-<button type="button" class="button button-primary" data-dialog="upload-dialog">{{ icon('plus') }}Загрузить файл</button>
-</section>
+      <section class="page-heading sky-heading">
+        <div class="heading-copy">
+          <p class="eyebrow"><span aria-hidden="true">✧</span> ЛИЧНОЕ НЕБО · {{ user.username }}</p>
+          <h1>Для важного.<br><em>И всего вашего.</em></h1>
+          <p class="page-description">Файлы, идеи и большие планы. Здесь им будет хорошо.</p>
+          <button type="button" class="button button-primary" data-dialog="upload-dialog">{{ icon('plus') }}Загрузить файл</button>
+        </div>
+        <figure class="workspace-sky">{{ sky() }}<figcaption>у каждого файла — своё облако</figcaption></figure>
+      </section>
       <div class="overview-heading">
-<h2>Обзор хранилища</h2>
-<span>В текущей папке</span>
+<h2>Всё по своим местам</h2>
+<span>маленький порядок, большое спокойствие</span>
 </div>
       <section class="overview-grid" aria-label="Категории файлов">
         <button class="overview-card" type="button" data-category="folder" aria-pressed="false">
@@ -275,7 +278,7 @@
           {% endfor %}
         </div>
         <div class="empty-state" data-empty {% if files %}hidden{% endif %}>
-<span class="empty-icon">{{ icon('folder') }}</span>
+<span class="empty-sky">{{ sky() }}</span>
 <h3 data-empty-title>Здесь начинается ваше облако</h3>
 <p data-empty-description>Загрузите первый файл или создайте папку.<br>Всё важное будет под рукой.</p>
 <button type="button" class="button button-secondary button-small" data-dialog="upload-dialog" data-empty-upload>{{ icon('plus') }}Добавить файл</button>
@@ -289,7 +292,7 @@
         {{ token() }}<input type="hidden" name="path" value="{{ path }}">
         <span class="dropzone-icon">{{ icon('upload') }}</span>
 <div class="dropzone-copy">
-<strong>Освободите место для новых идей</strong>
+<strong>Ещё немного вашего — сюда.</strong>
 <p>Перетащите сюда файл или выберите его на устройстве</p>
 <span>Любой формат · до {{ max_file }} МБ</span>
 </div>
@@ -302,7 +305,7 @@
 </p>
       </form>
       <footer class="page-footer">
-<span>Чуть меньше хаоса. Чуть больше пространства.</span>
+<span>Бережно к файлам. Нежно к вам.</span>
 <span>{{ icon('cloud') }}Моё облако</span>
 </footer>
 
@@ -492,42 +495,25 @@
     <aside class="auth-story">
       {{ brand() }}
       <div class="story-content">
-<span class="story-tag">
-<span>
-</span>ВАШЕ ЛИЧНОЕ ПРОСТРАНСТВО</span>
-<h1>Важное —<br>рядом.<br>
-<span>Остальное —<br>в облаке.</span>
-</h1>
-<p>Файлы, идеи и большие планы.<br>Одно спокойное место для всего.</p>
-        <div class="cloud-scene" aria-hidden="true">
-<div class="orbit orbit-one">
-</div>
-<div class="orbit orbit-two">
-</div>
-<div class="scene-cloud">{{ icon('cloud') }}<span class="cloud-check">{{ icon('check') }}</span>
-</div>
-<span class="floating-file floating-file-one">{{ icon('file') }}</span>
-<span class="floating-file floating-file-two">{{ icon('image') }}</span>
-<span class="floating-file floating-file-three">{{ icon('folder') }}</span>
-<span class="scene-dot dot-one">
-</span>
-<span class="scene-dot dot-two">
-</span>
-</div>
+        <span class="story-tag"><span></span>БЕРЕЖНО ХРАНИМ ВАШЕ ВАЖНОЕ</span>
+        <h1>У важных вещей<br>есть <em>своё облако.</em></h1>
+        <p>Немного порядка. Много воздуха.<br>И всё ваше — в одном уютном месте.</p>
+        <figure class="story-sky">{{ sky() }}<figcaption>для файлов, идей и всего, что хочется сохранить</figcaption></figure>
       </div>
-      <div class="story-footer">{{ icon('shield') }}<span>Только ваши файлы. Только ваш доступ.</span>
-</div>
+      <div class="story-footer"><span class="little-spark" aria-hidden="true">✧</span><span>Сделано для ваших маленьких и больших историй.</span><span class="story-edition">ЛИЧНОЕ НЕБО / 01</span></div>
     </aside>
     <main class="auth-main" id="main">
 <div class="auth-mobile-brand">{{ brand() }}</div>
-<div class="auth-form-wrap">{{ notices() }}
+<div class="auth-form-wrap">
+  <div class="paper-heading"><span>БИЛЕТ В ВАШЕ ОБЛАКО</span><span aria-hidden="true">№ 01</span></div>
+  {{ notices() }}
       {% if mode == 'error' %}<span class="category-icon red">{{ icon('shield') }}</span>
 <p class="eyebrow">ОПЕРАЦИЯ НЕ ВЫПОЛНЕНА</p>
 <h2>Попробуем ещё раз?</h2>
 <p class="error-message" role="alert">{{ error }}</p>
 <a class="button button-primary" href="{{ url_for('index') }}">{{ icon('back') }}Вернуться в приложение</a>
       {% else %}
-      <span class="auth-welcome-icon">{{ icon('cloud') }}</span>
+      <span class="auth-welcome-icon">{{ cloudmark() }}</span>
 <p class="eyebrow">{{ 'НАЧНЁМ С ГЛАВНОГО' if mode == 'setup' else 'БОЛЬШЕ МЕСТА ДЛЯ ВАШЕГО' if mode == 'register' else 'РАДЫ ВАС ВИДЕТЬ' }}</p>
 <h2>{{ 'Ваше облако начинается здесь' if mode == 'setup' else 'Создайте своё облако' if mode == 'register' else 'С возвращением' }}<span>.</span>
 </h2>
@@ -548,7 +534,7 @@
 </div>
       {% endif %}
     </div>
-<footer class="auth-footer">Меньше шума. Больше пространства.</footer>
+<footer class="auth-footer"><span aria-hidden="true">✧</span> Чуть ближе к своему. Чуть дальше от суеты.</footer>
 </main>
   </div>
 {% endif %}
