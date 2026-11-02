@@ -287,7 +287,7 @@ def create_app(directory=None):
             {
                 "Content-Security-Policy": (
                     "default-src 'self'; "
-                    "script-src 'none'; "
+                    "script-src 'self'; "
                     "style-src 'self' 'unsafe-inline'; "
                     "object-src 'none'; "
                     "base-uri 'none'; "
