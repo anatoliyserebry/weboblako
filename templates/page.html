@@ -51,8 +51,11 @@
 
   {% elif mode in ['setup', 'login', 'register'] %}
     <section class="card auth-card">
-      <h1>{{ 'Первый запуск' if mode == 'setup' else 'Регистрация' if mode == 'register' else 'Вход в аккаунт' }}</h1>
-      <p class="muted">{{ 'Создайте аккаунт администратора.' if mode == 'setup' else 'Заполните поля для создания аккаунта.' if mode == 'register' else 'Введите логин и пароль для доступа к файлам.' }}</p>
+      <div class="auth-intro">
+        <img class="auth-icon" src="{{ url_for('static', filename='cloud.svg') }}" alt="" width="54" height="54">
+        <h1>{{ 'Первый запуск' if mode == 'setup' else 'Регистрация' if mode == 'register' else 'Вход в аккаунт' }}</h1>
+        <p class="muted">{{ 'Создайте аккаунт администратора.' if mode == 'setup' else 'Заполните поля для создания аккаунта.' if mode == 'register' else 'Введите логин и пароль для доступа к файлам.' }}</p>
+      </div>
       <form method="post" action="{{ url_for('account_action', action=mode) }}">
         {{ token() }}
         {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
